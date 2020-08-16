@@ -1,58 +1,87 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center text-center min-vh-100 m-0 my-auto">
-    <div>
-      <header>
-        <img
-          src="https://cdn.hashnode.com/res/hashnode/image/upload/v1594059995543/vwTYbmSQ9.png"
-          width="300"
-        />
-      </header>
-      {{states[name='Aba'] }}
-      <div class="d-flex align-items-center mb-3">
-        <div class="mr-3">country:</div>
-        <select
-          v-model="selectedCountry"
-          @change="fetchStates()"
-          class="form-control form-control-lg"
-          placeholder="Select Your Country"
-        >
-          <option value disabled selected>Select your country</option>
-          <option v-for="item in countries" v-bind:value="item" v-bind:key="item">{{ item }}</option>
-        </select>
+  <main class="d-flex justify-content-center align-items-center text-center min-vh-100 m-0 my-auto">
+    <div class="col-12 col-sm-10 col-md-8">
+      <div v-if="success">
+        <a href="/">
+          <img
+            alt="sucessfully submitted"
+            src="https://cdn3.iconfinder.com/data/icons/flat-actions-icons-9/792/Tick_Mark_Dark-512.png"
+          />
+        </a>
       </div>
 
-      <div class="d-flex align-items-center mb-3">
-        <div class="mr-3">State:</div>
-        <select
-          v-model="selectedState"
-          class="form-control form-control-lg"
-          placeholder="Select Your countries"
-          @change="fetchCities()"
-        >
-          <option
-            v-for="item in states"
-            v-bind:value="item.name"
-            v-bind:key="item.id"
-          >{{ item.name }}</option>
-        </select>
-      </div>
+      <form v-else @submit.prevent="submitForm" @reset="resetForm">
+        <header>
+          <img
+            src="https://cdn.hashnode.com/res/hashnode/image/upload/v1594059995543/vwTYbmSQ9.png"
+            width="250"
+          />
+        </header>
 
-      <div class="d-flex align-items-center">
-        <div class="mr-3">City:</div>
-        <select
-          v-model="selectedCity"
-          class="form-control form-control-lg"
-          placeholder="Select Your City/Region"
-        >
-          <option
-            v-for="item in cities"
-            v-bind:value="item.name"
-            v-bind:key="item.id"
-          >{{ item.name }}</option>
-        </select>
-      </div>
+        <section>
+          <div class="row my-3">
+            <label class="col-3 lead my-auto">Country:</label>
+
+            <select
+              required
+              @change="fetchStates()"
+              v-model="FORM.country"
+              searchable="Search here.."
+              class="col custom-select custom-selects-lg"
+            >
+              <option disabled selected>Select country</option>
+              <option v-for="item in countries" v-bind:value="item" v-bind:key="item">{{ item }}</option>
+            </select>
+          </div>
+
+          <div class="row align-center">
+            <label class="col-3 lead my-auto">State:</label>
+
+            <select
+              required
+              :disabled="!FORM.country"
+              v-model="FORM.state"
+              class="col custom-select custom-selects-lg"
+            >
+              <option value disabled selected>Select state</option>
+              <option
+                v-for="item in states"
+                v-bind:value="item.name"
+                v-bind:key="item.id"
+              >{{ item.name }}</option>
+            </select>
+          </div>
+
+          <div class="row mt-3">
+            <label class="col-3 lead my-auto">Capital:</label>
+
+            <select required :disabled="!FORM.state" class="col custom-select custom-selects-lg">
+              <option value disabled selected>Select capital</option>
+
+              <template v-for="state in states">
+                <template v-if=" state.name == FORM.state">
+                  <option
+                    v-for="city in state.cities"
+                    v-bind:value="city.name"
+                    v-bind:key="state.id + '-' + city.id"
+                  >{{ city.name }}</option>
+                </template>
+              </template>
+            </select>
+          </div>
+        </section>
+
+        <footer class="row">
+          <div class="col-10 col-sm-6 mt-4">
+            <button class="btn btn-outline-primary w-100" type="reset">Reset</button>
+          </div>
+          <div class="col-10 col-sm-6 mt-4">
+            <button class="btn btn-primary w-100" type="submit">Submit form</button>
+          </div>
+        </footer>
+      </form>
     </div>
-  </div>
+  </main>
 </template>
 
 
@@ -62,16 +91,12 @@ import axios from "axios";
 export default {
   data() {
     return {
-      JSON,
+      success: false,
 
-      selectedCity: "",
-      selectedState: "",
-      selectedCountry: "",
-
-      cities: {},
       states: {},
-
       countries: {},
+
+      FORM: { country: "", state: "" },
     };
   },
 
@@ -94,7 +119,7 @@ export default {
 
       axios
         .get(
-          `http://allcountries.us-east-2.elasticbeanstalk.com/countries/details/${this.selectedCountry}`
+          `http://allcountries.us-east-2.elasticbeanstalk.com/countries/details/${this.FORM.country}`
         )
         .then((response) => {
           // JSON responses are automatically parsed.
@@ -105,12 +130,16 @@ export default {
         });
     },
 
-    fetchCities() {
-      try {
-        this.states = this.states[this.selectedState];
-      } catch (error) {
-        //
-      }
+    submitForm() {
+      // Show the success
+      this.success = true;
+
+      console.log("Form submit successfully");
+    },
+
+    resetForm() {
+      this.FORM.state = "";
+      this.FORM.country = "";
     },
   },
 };
